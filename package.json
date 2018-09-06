@@ -1,0 +1,77 @@
+{
+  "author": "vitalii.perehonchuk@eliftech.com",
+  "babel": {
+    "presets": [
+      "latest",
+      "minify"
+    ],
+    "plugins": [
+      [
+        "transform-runtime",
+        {
+          "polyfill": false,
+          "regenerator": true
+        }
+      ]
+    ]
+  },
+  "description": "car plate number recognition",
+  "dependencies": {
+    "moment": "^2.22.2",
+    "node-webcam": "^0.4.4"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-eslint": "^9.0.0",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-polyfill": "^6.26.0",
+    "babel-preset-latest": "^6.24.1",
+    "babel-preset-minify": "^0.4.3",
+    "eslint": "^5.5.0",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-config-prettier": "^3.0.1",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-jsx-a11y": "^6.1.1",
+    "eslint-plugin-prettier": "^2.6.2",
+    "eslint-plugin-react": "^7.11.1",
+    "husky": "^0.14.3",
+    "lint-staged": "^7.2.2",
+    "prettier": "^1.14.2"
+  },
+  "eslintIgnore": ["build/*"],
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "license": "ISC",
+  "lint-staged": {
+    "ignore": [
+      "build",
+      "package.json"
+    ],
+    "linters": {
+      "*.js": [
+        "eslint --no-ignore --fix",
+        "git add --force"
+      ],
+      "*.{json,md,graphql}": [
+        "prettier --write",
+        "git add --force"
+      ]
+    }
+  },
+  "main": "src/index.js",
+  "name": "cnpr-recognition",
+  "version": "0.1.0",
+  "scripts": {
+    "build": "babel src -d build",
+    "dev": "babel-node src/index.js",
+    "fix-js": "npm run lint-js --fix",
+    "fix": "npm run fix-js",
+    "lint-js": "eslint --ignore-path .gitignore --ignore-pattern \"!**/.*\" .",
+    "lint": "npm run lint-js",
+    "start": "npm run build && node build/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
