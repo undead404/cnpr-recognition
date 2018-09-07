@@ -34,6 +34,7 @@ export default {
   captureDelay: 5000, // ms
   country: 'ua',
   currentViewJpgPath: path.resolve('.', 'tmp', 'current.jpg'),
+  dbFileName: path.resolve('.', 'recognition.db'),
   minConfidence: 87,
   minNumberLength: 7,
   recognitionDelay: 5000,

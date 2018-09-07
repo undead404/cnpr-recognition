@@ -1,8 +1,14 @@
 import camera from './camera';
 import config from './config';
+import Database from './database';
 import recognize from './recognize';
 
+const db = new Database();
+
 async function captureAndRecognize() {
+  if (!db.isOpen()) {
+    await db.init();
+  }
   try {
     const imageFileName = await new Promise((resolve, reject) => {
       camera.capture(config.currentViewJpgPath, (err, data) => {
@@ -14,22 +20,12 @@ async function captureAndRecognize() {
       });
     });
     const recognitionResult = await recognize(imageFileName);
-    console.info(recognitionResult);
     if (recognitionResult.results.length === 0) {
+      console.info('No plates found');
       return;
     }
     const { plate, confidence, region } = recognitionResult.results[0];
-    const matchedPlate = [
-      {
-        plate: 'AK 9265 AK',
-      },
-    ].find(
-      plateItem => plateItem && plateItem.plate.replace(' ', '') === plate,
-    );
-    if (matchedPlate) {
-      console.info('Matched plate is ');
-      console.info(matchedPlate);
-    }
+    const matchedPlate = await db.getPlateByNumber(plate);
     const report = {
       dateTime: recognitionResult.dateTime,
       plate,

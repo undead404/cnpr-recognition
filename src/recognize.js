@@ -7,7 +7,9 @@ let busy = false;
 let lastResult;
 
 export default async function recognize(imagePath) {
-  if (busy) return Promise.reject(new Error('Recognition is busy'));
+  if (busy) {
+    throw new Error('Recognition is busy');
+  }
   if (imagePath && !fs.existsSync(imagePath)) {
     throw new Error(`File ${imagePath} doesn't exist`);
   }
@@ -30,12 +32,12 @@ export default async function recognize(imagePath) {
       const diff = result.epoch_time - lastResult.epoch_time;
       console.info(`Last result delay: ${diff}`);
       if (diff < config.recognitionDelay) {
-        return Promise.reject(new Error('Wait a little to recognize again'));
+        throw new Error('Wait a little to recognize again');
       }
     }
     console.info(result.results[0].plate);
     lastResult = result;
   }
   busy = false;
-  return Promise.resolve(result);
+  return result;
 }
