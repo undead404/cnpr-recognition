@@ -2,6 +2,7 @@ import childProcess from 'child_process';
 import fs from 'fs';
 import moment from 'moment';
 import config from './config';
+import Database from './database';
 
 let busy = false;
 let lastResult;
@@ -22,20 +23,23 @@ export default async function recognize(imagePath) {
       resolve(JSON.parse(stdout));
     });
   });
+  const db = new Database();
+  const persistentConfig = await db.getPersistentConfig();
   if (
     result.results.length &&
-    result.results[0].plate.length >= config.minNumberLength &&
-    result.results[0].confidence > config.minConfidence
+    result.results[0].plate.length >= persistentConfig.minNumberLength &&
+    result.results[0].confidence > persistentConfig.minConfidence
   ) {
     result.dateTime = moment(result.epoch_time).format('DD.MM.YYYY hh:mm:ss');
     if (lastResult && lastResult.results[0].plate === result.results[0].plate) {
       const diff = result.epoch_time - lastResult.epoch_time;
       console.info(`Last result delay: ${diff}`);
-      if (diff < config.recognitionDelay) {
+      if (diff < persistentConfig.recognitionDelay) {
         throw new Error('Wait a little to recognize again');
       }
     }
     console.info(result.results[0].plate);
+    db.registerEncounter(result.results[0].plate);
     lastResult = result;
   }
   busy = false;

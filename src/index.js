@@ -1,3 +1,4 @@
+import readline from 'readline';
 import camera from './camera';
 import config from './config';
 import Database from './database';
@@ -6,9 +7,6 @@ import recognize from './recognize';
 const db = new Database();
 
 async function captureAndRecognize() {
-  if (!db.isOpen()) {
-    await db.init();
-  }
   try {
     const imageFileName = await new Promise((resolve, reject) => {
       camera.capture(config.currentViewJpgPath, (err, data) => {
@@ -39,5 +37,23 @@ async function captureAndRecognize() {
     console.error(err);
   }
 }
+const timer = setInterval(captureAndRecognize, config.captureDelay);
 
-setInterval(captureAndRecognize, config.captureDelay);
+if (process.platform === 'win32') {
+  readline
+    .createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    })
+    .on('SIGINT', () => {
+      process.emit('SIGINT');
+    });
+}
+
+process.on('SIGINT', async () => {
+  clearInterval(timer);
+  if (db.isOpen()) {
+    await db.close();
+  }
+  process.exit();
+});
