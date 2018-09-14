@@ -11,4 +11,5 @@ git clone "https://github.com/undead404/cnpr-recognition"
 cd "cnpr-recognition"
 yarn
 cat "recognition.sql" | sqlite3 "../recognition.db"
+yarn run dev
 ```
