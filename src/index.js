@@ -1,10 +1,8 @@
 import readline from 'readline';
 import camera from './camera';
 import config from './config';
-import Database from './database';
+import db from './database';
 import recognize from './recognize';
-
-const db = new Database();
 
 async function captureAndRecognize() {
   try {

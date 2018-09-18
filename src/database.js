@@ -1,8 +1,30 @@
 import sqlite from 'sqlite';
+import readline from 'readline';
 import config from './config';
 import { normalizePlateNumber } from './functions';
 
-export default class Database {
+class Database {
+  constructor() {
+    if (process.platform === 'win32') {
+      readline
+        .createInterface({
+          input: process.stdin,
+          output: process.stdout,
+        })
+        .on('SIGINT', () => {
+          process.emit('SIGINT');
+        });
+    }
+
+    process.on('SIGINT', async () => {
+      if (this.isOpen()) {
+        console.info('Closing database connection...');
+        await this.close();
+      }
+      process.exit();
+    });
+  }
+
   async close() {
     await this.db.close();
   }
@@ -11,9 +33,10 @@ export default class Database {
     if (Database.db) {
       this.db = Database.db;
     } else {
+      console.info(config.dbFileName);
       this.db = await sqlite.open(config.dbFileName);
       Database.db = this.db;
-      console.info('DB is ready.');
+      console.info(this.db ? 'DB is ready.' : 'DB NOT READY');
     }
   }
 
@@ -43,6 +66,13 @@ export default class Database {
     return this.persistentConfig;
   }
 
+  async getPlateById(id) {
+    if (!this.isOpen()) {
+      await this.init();
+    }
+    return this.db.get('SELECT * FROM plates WHERE id = ?', id);
+  }
+
   async getPlateByNumber(number) {
     if (!this.isOpen()) {
       await this.init();
@@ -53,26 +83,34 @@ export default class Database {
     );
   }
 
-  async registerEncounter(number) {
-    console.info(`registerEncounter(${number})`);
+  isOpen() {
+    return !!this.db;
+  }
+
+  async registerEncounter(plateData) {
     if (!this.isOpen()) {
       await this.init();
     }
-    const plate = await this.getPlateByNumber(number);
+    const plate = await this.getPlateByNumber(plateData.plate);
     if (plate) {
       await this.db.run(
-        "UPDATE plates ON number = ? SET last_seen = DATETIME('NOW')",
-        number,
+        "UPDATE plates SET last_seen = DATETIME('NOW') WHERE number = ?",
+        plate.number,
       );
     } else {
       await this.db.run(
         "INSERT INTO plates (number, last_seen) VALUES (?, DATETIME('NOW'))",
-        number,
+        plateData.plate,
       );
     }
-  }
-
-  isOpen() {
-    return !!this.db;
+    await this.db.run(
+      "INSERT INTO logs (plateNumber, datetime, confidence, region, allowed) VALUES (?, DATETIME('NOW'), ?, ?, ?)",
+      plateData.plate,
+      plateData.confidence,
+      plateData.region,
+      plate ? plate.allowed : 0,
+    );
   }
 }
+
+export default new Database();

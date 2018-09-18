@@ -2,7 +2,7 @@ import childProcess from 'child_process';
 import fs from 'fs';
 import moment from 'moment';
 import config from './config';
-import Database from './database';
+import db from './database';
 
 let busy = false;
 let lastResult;
@@ -23,7 +23,6 @@ export default async function recognize(imagePath) {
       resolve(JSON.parse(stdout));
     });
   });
-  const db = new Database();
   const persistentConfig = await db.getPersistentConfig();
   if (
     result.results.length &&
@@ -39,7 +38,9 @@ export default async function recognize(imagePath) {
       }
     }
     console.info(result.results[0].plate);
-    db.registerEncounter(result.results[0].plate);
+    await Promise.all(
+      result.results.map(plateData => db.registerEncounter(plateData)),
+    );
     lastResult = result;
   }
   busy = false;
